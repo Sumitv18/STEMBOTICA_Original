@@ -1,0 +1,12 @@
+await submitContactForm({
+  name: waitlistForm.fullName,
+  schoolName: "Not provided",
+  email: waitlistForm.email,
+  phone: "Not provided",
+  service: "Online Courses Waitlist",
+  message: `Waitlist Registration Details:
+- Full Name: ${waitlistForm.fullName}
+- Email: ${waitlistForm.email}
+- Class/Grade: ${waitlistForm.grade}
+- Course Interests: ${waitlistForm.courseInterests.length > 0 ? waitlistForm.courseInterests.join(", ") : "None selected"}`
+});
