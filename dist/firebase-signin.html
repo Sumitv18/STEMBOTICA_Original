@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>STEMBotica — Firebase Google Sign-In Test</title>
+    <style>
+      body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial; padding: 24px; }
+      .card { max-width:420px; margin:48px auto; padding:24px; border:1px solid #e6e6e6; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.03); }
+      button { padding:10px 14px; border-radius:6px; border:0; cursor:pointer }
+      .google { background:#1a73e8; color:white; display:inline-flex; align-items:center; gap:8px }
+      #status { margin-top:12px }
+      img.logo { width:72px; height:72px; object-fit:contain; display:block; margin:0 auto 8px }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="/logo.png" alt="STEMBotica" class="logo" onerror="this.src='/logo.svg'"/>
+      <h2 style="text-align:center;margin:0 0 8px">Sign in to STEMBotica</h2>
+      <p style="text-align:center;margin:0 0 16px;color:#666;font-size:14px">Use Google Sign-In to test Firebase auth setup</p>
+
+      <div style="display:flex;gap:8px;flex-direction:column">
+        <button id="googleSignInBtn" class="google">🔵 Sign in with Google</button>
+        <button id="googleSignInRedirect" style="background:#0b5cff;color:#fff">➡️ Sign in with Google (redirect)</button>
+      </div>
+
+      <div id="status"></div>
+
+      <hr style="margin:16px 0" />
+      <div style="font-size:13px;color:#444">
+        <strong>Instructions</strong>
+        <ol>
+          <li>Open <code>public/firebase-signin.html</code> and replace the <code>firebaseConfig</code> placeholders with your project's values.</li>
+          <li>Enable Google provider in Firebase Console (Auth → Sign-in method → Google).</li>
+          <li>Add your domain and <code>localhost</code> to Firebase Authorized domains.</li>
+          <li>Deploy to Firebase Hosting or open locally with an http server; click the Google button and check DevTools for detailed errors.</li>
+        </ol>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signInWithRedirect,
+        getRedirectResult
+      } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+      // ======= REPLACE THESE VALUES with your Firebase project's config =======
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        // storageBucket, messagingSenderId, appId optional here
+      };
+      // ========================================================================
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+
+      const statusEl = document.getElementById('status');
+      const googleBtn = document.getElementById('googleSignInBtn');
+      const googleRedirectBtn = document.getElementById('googleSignInRedirect');
+
+      function setStatus(text, color = '#c00'){
+        statusEl.textContent = text;
+        statusEl.style.color = color;
+      }
+
+      function logError(e){
+        console.error('Firebase sign-in error:', e);
+        try{
+          // some errors include nested properties
+          const code = e.code || '(no code)';
+          const msg = e.message || '(no message)';
+          const details = JSON.stringify(e, Object.getOwnPropertyNames(e));
+          setStatus(`${code}: ${msg}`);
+          // show a more verbose console alert for debugging
+          alert(`Sign-in failed:\nCode: ${code}\nMessage: ${msg}\nFull object in console.`);
+          console.log('Full error details:', details);
+        }catch(_){
+          setStatus('Sign-in failed — check console for details.');
+        }
+      }
+
+      // Popup flow — must be executed directly in click handler to avoid popup blocking
+      googleBtn.addEventListener('click', async () => {
+        setStatus('Opening Google sign-in...');
+        try{
+          const result = await signInWithPopup(auth, provider);
+          const user = result.user;
+          console.log('Signed in (popup) user:', result);
+          setStatus(`Signed in as ${user.email}`, 'green');
+        }catch(e){
+          logError(e);
+        }
+      });
+
+      // Redirect flow (alternative for popup-blockers)
+      googleRedirectBtn.addEventListener('click', async () => {
+        setStatus('Redirecting to Google sign-in...');
+        try{
+          await signInWithRedirect(auth, provider);
+          // page will redirect away
+        }catch(e){
+          logError(e);
+        }
+      });
+
+      // If you use redirect flow, handle the result on page load
+      (async function handleRedirectResult(){
+        try{
+          const result = await getRedirectResult(auth);
+          if(result){
+            console.log('getRedirectResult:', result);
+            setStatus(`Signed in via redirect as ${result.user.email}`, 'green');
+          }
+        }catch(e){
+          // redirect-specific errors
+          if(e && e.code){
+            logError(e);
+          }
+        }
+      })();
+
+    </script>
+  </body>
+</html>
