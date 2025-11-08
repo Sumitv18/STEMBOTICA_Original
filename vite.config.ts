@@ -1,11 +1,10 @@
-import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import path from 'path'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  base: './', // 👈 Very important for deployment (prevents white screen)
+  base: '/', // ✅ Important for Vercel — root-relative paths
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
